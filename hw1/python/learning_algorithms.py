@@ -1,11 +1,12 @@
 import pickle
 import gymnasium as gym
 import torch
-from gymnasium.utils.save_video import save_video
+
 from torch import nn
 from torch.optim import Adam
 from torch.distributions import Categorical
 from utils import *
+from gymnasium.utils.save_video import save_video
 
 
 # Class for training an RL agent within an environment
@@ -25,9 +26,9 @@ class PGTrainer:
             print(trajectory)
             loss = self.estimate_loss_function(trajectory)
             self.update_policy(loss)
-            # TODO: Calculate avg reward for this rollout
+            # DONE TODO: Calculate avg reward for this rollout
             # HINT: Add all the rewards from each trajectory. There should be "ntr" trajectories within a single rollout.
-            avg_ro_reward = sum(sum(trajectory['reward'])) / self.params['n_trajectory_per_rollout']
+            avg_ro_reward = sum(sum(traj_rewards) for traj_rewards in trajectory['reward']) / self.params['n_trajectory_per_rollout']
             print(f'End of rollout {ro_idx}: Average trajectory reward is {avg_ro_reward: 0.2f}')
             # Append average rollout reward into a list
             list_ro_reward.append(avg_ro_reward)
@@ -42,23 +43,31 @@ class PGTrainer:
 
     def estimate_loss_function(self, trajectory):
         loss = list()
+        # for t_idx in range(self.params['n_trajectory_per_rollout']):
+        #     # DONE TODO: Compute loss function
+        #     # HINT 1: You should implement equation of policy gradient, reward to go and reward discounting here. Which will be used based on the flags set from the main function
+        #     # Get trajectory action log-prob
+        #     # Calculate discounted and reward-to-go
+        #     # Calculate loss
+        #     # HINT 2: Get trajectory action log-prob  
+        #     # HINT 3: Calculate Loss function and append to the list
+        gamma = 0.99
         for t_idx in range(self.params['n_trajectory_per_rollout']):
-            # TODO: Compute loss function
-            # HINT 1: You should implement equation of policy gradient, reward to go and reward discounting here. Which will be used based on the flags set from the main function
-            # Get trajectory action log-prob
-            traj_log_probs = torch.cat(trajectory['log_prob'][t_idx]).squeeze()
-            traj_rewards = torch.Tensor(trajectory['reward'][t_idx]).to(get_device())
-
-            # Calculate discounted and reward-to-go
-            traj_discounted_rewards = apply_discount(traj_rewards, self.params['gamma'])
-            #traj_normalized_discounted_rewards = normalize_discounted_rewards(traj_discounted_rewards)
-
-            # Calculate loss
-            traj_loss = torch.sum(-traj_log_probs * traj_discounted_rewards)
-            loss.append(traj_loss)
-            # HINT 2: Get trajectory action log-prob
-        
-            # HINT 3: Calculate Loss function and append to the list
+            log_probs = trajectory['log_prob'][t_idx]
+            rewards = trajectory['reward'][t_idx]
+            if self.params['reward_to_go']:
+                reward_sum = 0
+                for i in range(len(rewards) - 1, -1, -1):
+                    reward_sum = rewards[i] + gamma * reward_sum
+                    loss.append(-log_probs[i] * reward_sum)
+            else:
+                reward_sum = sum(rewards)
+                if self.params['reward_discount']:
+                    for i in range(len(rewards)):
+                        loss.append(-log_probs[i] * (reward_sum * gamma ** i))
+                else:
+                    for i in range(len(rewards)):
+                        loss.append(-log_probs[i] * reward_sum)
 
         loss = torch.stack(loss).mean()
         return loss

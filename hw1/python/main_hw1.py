@@ -2,7 +2,6 @@ import argparse
 from learning_algorithms import PGTrainer
 from utils import seed_everything
 
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--env_name', '-e', type=str, default='LunarLander-v2')
