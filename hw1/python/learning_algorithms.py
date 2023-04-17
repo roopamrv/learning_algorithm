@@ -23,7 +23,7 @@ class PGTrainer:
 
         for ro_idx in range(self.params['n_rollout']):
             trajectory = self.agent.collect_trajectory(policy=self.actor_policy)
-            print(trajectory)
+            #print(trajectory)
             loss = self.estimate_loss_function(trajectory)
             self.update_policy(loss)
             # DONE TODO: Calculate avg reward for this rollout
@@ -43,14 +43,13 @@ class PGTrainer:
 
     def estimate_loss_function(self, trajectory):
         loss = list()
-        # for t_idx in range(self.params['n_trajectory_per_rollout']):
-        #     # DONE TODO: Compute loss function
-        #     # HINT 1: You should implement equation of policy gradient, reward to go and reward discounting here. Which will be used based on the flags set from the main function
-        #     # Get trajectory action log-prob
-        #     # Calculate discounted and reward-to-go
-        #     # Calculate loss
-        #     # HINT 2: Get trajectory action log-prob  
-        #     # HINT 3: Calculate Loss function and append to the list
+            # DONE TODO: Compute loss function
+            # HINT 1: You should implement equation of policy gradient, reward to go and reward discounting here. Which will be used based on the flags set from the main function
+            # Get trajectory action log-prob
+            # Calculate discounted and reward-to-go
+            # Calculate loss
+            # HINT 2: Get trajectory action log-prob  
+            # HINT 3: Calculate Loss function and append to the list
         gamma = 0.99
         for t_idx in range(self.params['n_trajectory_per_rollout']):
             log_probs = trajectory['log_prob'][t_idx]
@@ -68,7 +67,10 @@ class PGTrainer:
                 else:
                     for i in range(len(rewards)):
                         loss.append(-log_probs[i] * reward_sum)
-
+        print("Discounted reward to go:", apply_discount(rewards))
+        print("Reward-to-go:", apply_reward_to_go(rewards))
+        print("Return-Reward: ", apply_return(rewards))
+        
         loss = torch.stack(loss).mean()
         return loss
 

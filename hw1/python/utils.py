@@ -28,6 +28,7 @@ def apply_reward_to_go(raw_reward):
     # Normalization
     rtg_reward = np.array(rtg_reward)
     rtg_reward = rtg_reward - np.mean(rtg_reward) / (np.std(rtg_reward) + np.finfo(np.float32).eps)
+    print("Reward-to-go:", rtg_reward)
     return torch.tensor(rtg_reward, dtype=torch.float32, device=get_device())
 
 
@@ -43,7 +44,9 @@ def apply_discount(raw_reward, gamma=0.99):
     discounted_rtg_reward.reverse()
     # Normalization
     discounted_rtg_reward = np.array(discounted_rtg_reward)
-    discounted_rtg_reward = discounted_rtg_reward - np.mean(discounted_rtg_reward) / (np.std(discounted_rtg_reward) + np.finfo(np.float32).eps)
+    discounted_rtg_reward = discounted_rtg_reward - np.mean(discounted_rtg_reward) / \
+                                                        (np.std(discounted_rtg_reward) + np.finfo(np.float32).eps)
+    print("Discounted reward to go:", discounted_rtg_reward)
     return torch.tensor(discounted_rtg_reward, dtype=torch.float32, device=get_device())
 
 
@@ -51,5 +54,6 @@ def apply_discount(raw_reward, gamma=0.99):
 def apply_return(raw_reward):
     # Compute r_reward (as a list) from raw_reward
     r_reward = [np.sum(raw_reward) for _ in raw_reward]
+    print("Return-Reward: ", r_reward)
     return torch.tensor(r_reward, dtype=torch.float32, device=get_device())
 
